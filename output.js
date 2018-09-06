@@ -133,7 +133,7 @@ handlers.UpdateBuildItemState = function (args) {
     var inventory = server.GetUserInventory({
         "PlayFabId": currentPlayerId
     });
-    var item = inventory.Inventory.find(x => x.ItemId == args.ItemName && x.CustomData["SlotID"] != "Unused");
+    var item = inventory.Inventory.find(x => x.ItemId == args.ItemName && x.CustomData["SlotID"] == "Unused");
     if (item) {
         var UpdateCustomDataRequest = {
             "PlayFabId": currentPlayerId,
