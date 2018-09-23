@@ -133,16 +133,18 @@ handlers.UpdateBuildItemState = function (args) {
     var inventory = server.GetUserInventory({
         "PlayFabId": currentPlayerId
     });
-    var item = inventory.Inventory.find(x => x.ItemId == args.ItemName && (x.CustomData == null || x.CustomData["SlotID"] == null));
-    if (item) {
-        var UpdateCustomDataRequest = {
-            "PlayFabId": currentPlayerId,
-            "ItemInstanceId": item.ItemInstanceId,
-            "Data": {
-                "SlotID": args.SlotID
-            }
-        };
-        server.UpdateUserInventoryItemCustomData(UpdateCustomDataRequest);
-    }
+    args.items.forEach(element => {
+        var item = inventory.Inventory.find(x => x.ItemId == element.ItemName && (x.CustomData == null || x.CustomData["SlotID"] == null));
+        if (item) {
+            var UpdateCustomDataRequest = {
+                "PlayFabId": currentPlayerId,
+                "ItemInstanceId": item.ItemInstanceId,
+                "Data": {
+                    "SlotID": args.SlotID
+                }
+            };
+            server.UpdateUserInventoryItemCustomData(UpdateCustomDataRequest);
+        }
+    });
 };
 //# sourceMappingURL=output.js.map
