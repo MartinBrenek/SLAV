@@ -217,6 +217,25 @@ function processPlayerMove(playerMove) {
     return true;
 }
 
+// This is an example of using PlayStream real-time segmentation to trigger
+// game logic based on player behavior. (https://playfab.com/introducing-playstream/)
+// The function is called when a player_statistic_changed PlayStream event causes a player 
+// to enter a segment defined for high skill players. It sets a key value in
+// the player's internal data which unlocks some new content for the player.
+handlers.unlockHighSkillContent = function (args, context) {
+    var playerStatUpdatedEvent = context.playStreamEvent;
+    var request = {
+        PlayFabId: currentPlayerId,
+        Data: {
+            "HighSkillContent": "true",
+            "XPAtHighSkillUnlock": playerStatUpdatedEvent.StatisticValue.toString()
+        }
+    };
+    var playerInternalData = server.UpdateUserInternalData(request);
+    log.info('Unlocked HighSkillContent for ' + context.playerProfile.DisplayName);
+    return { profile: context.playerProfile };
+};
+
 // Photon Webhooks Integration
 //
 // The following functions are examples of Photon Cloud Webhook handlers. 
@@ -271,21 +290,48 @@ handlers.RoomEventRaised = function (args) {
     }
 };
 
-handlers.UpdateBuildItemState = function (args) {
-    var inventory = server.GetUserInventory({
-        "PlayFabId": currentPlayerId
-    });
-
-    var item = inventory.Inventory.find(x => x.ItemId == args.ItemName && (x.CustomData == null || x.CustomData["SlotID"] == null))
-    if(item)
-    {
-        var UpdateCustomDataRequest = {
-            "PlayFabId": currentPlayerId,
-            "ItemInstanceId": item.ItemInstanceId,
-            "Data": {
-                "SlotID": args.SlotID
-            }
-        };
-        server.UpdateUserInventoryItemCustomData(UpdateCustomDataRequest);
+handlers.UpgradePerkCard = function (args) {
+    var combinedData = GetPlayerCombinedInfo({
+        GetTitleData: true,
+        TitleDataKeys: [TD_PERKDEFS_KEY, TD_PIGGYBANK_KEY],
+        GetUserInventory: true,
+        GetUserVirtualCurrency: true,
+        GetUserReadOnlyData: true,
+        UserReadOnlyDataKeys: [PLAYERROD_STATS_KEY, PLAYERROD_PIGGYBANK_KEY, "PIG"]
+    }).InfoResultPayload;
+    var titleData = combinedData.TitleData;
+    var perkCardDefs = JSON.parse(titleData[TD_PERKDEFS_KEY]);
+    var userInventory = combinedData.UserInventory;
+    var LoadedArgs = { "TitleData": titleData };
+    var name = args.name;
+    var item = GetUserInventoryItemID_ItemList(name, userInventory);
+    if (!item) {
+        var text = "Error: Card is not in inventory";
+        return { "Error": text };
+    }
+    var perkDef = GetPerkDefinition(name, perkCardDefs["Perks"]);
+    if (!perkDef) {
+        var text = "Error: Perk does not have definition";
+        log.debug(text, args);
+        return { "Error": text };
+    }
+    var level = GetCardLevel(item, null, userInventory);
+    var rarity = perkDef["RT"];
+    var price = GetPerkUpgradePrice(level - 1, rarity, perkCardDefs["Prices"]);
+    var userROData = combinedData.UserReadOnlyData;
+    LoadedArgs["ReadOnlyData"] = userROData;
+    var coins = GetUserCurrency_VirtualCurrency("CN", combinedData.UserVirtualCurrency);
+    if (coins >= price) {
+        LevelUpPerkCard(item, level, price, args != null ? args["ver"] : null, LoadedArgs);
+        item = GetUserInventoryItemID_ItemList(name, userInventory);
+        return item;
+    }
+    else {
+        var text = "Error: On account is less coins";
+        log.debug(text, { "OnClient": args["price"], "OnServerNeed": price, "OnServerHave": coins });
+        if (coins < -1000) {
+            cheatReport("Player have minuses coins on server", coins, 100);
+        }
+        return { "Error": text };
     }
 };
