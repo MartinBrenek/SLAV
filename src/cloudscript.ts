@@ -285,7 +285,7 @@ handlers.UpdateBuildItemState = function (args) {
                 "PlayFabId": currentPlayerId,
                 "ItemInstanceId": item.ItemInstanceId,
                 "Data": {
-                    "SlotID": args.SlotID
+                    "SlotID": element.SlotID
                 }
             };
             server.UpdateUserInventoryItemCustomData(UpdateCustomDataRequest);
