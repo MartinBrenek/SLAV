@@ -291,7 +291,8 @@ handlers.UpdateBuildItemState = function (args) {
         log.info("No object in BUILD CONFIG!");
         updatebuildconfig = {[BUILDING_SLOTS_RO_KEY] : [buildrecord]};
     }
-    updatebuildconfig = JSON.parse(buildconfig[BUILDING_RO_KEY].Value);
+    else
+        updatebuildconfig = JSON.parse(buildconfig[BUILDING_RO_KEY].Value);
 
     args.items.forEach(element => {
         var index = inventory.Inventory.findIndex(x => x.ItemId == element.ItemName);
