@@ -284,7 +284,7 @@ handlers.UpdateBuildItemState = function (args) {
 
     var buildrecord = {};
     var updatebuildconfig;
-    var updatebuildslots;
+    var updatebuildslots = [];
     var buildconfig = getUserReadOnlyData([BUILDING_RO_KEY]);
     if (!buildconfig.hasOwnProperty(BUILDING_RO_KEY))
     {
