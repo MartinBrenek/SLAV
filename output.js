@@ -1,3 +1,5 @@
+const BUILDING_RO_KEY = "BuildingData";
+const BUILDING_SLOTS_RO_KEY = "SlotsConfig";
 handlers.helloWorld = function (args, context) {
     var message = "Hello " + currentPlayerId + "!";
     log.info(message);
@@ -133,18 +135,122 @@ handlers.UpdateBuildItemState = function (args) {
     var inventory = server.GetUserInventory({
         "PlayFabId": currentPlayerId
     });
+    var buildrecord = {};
+    var updatebuildconfig;
+    var updatebuildslots;
+    var buildconfig = getUserReadOnlyData([BUILDING_RO_KEY]);
+    if (!buildconfig.hasOwnProperty(BUILDING_RO_KEY)) {
+        log.info("No object in BUILD CONFIG!");
+        updatebuildconfig = { [BUILDING_SLOTS_RO_KEY]: [buildrecord] };
+    }
+    updatebuildconfig = JSON.parse(buildconfig[BUILDING_RO_KEY].Value);
     args.items.forEach(element => {
-        var item = inventory.Inventory.find(x => x.ItemId == element.ItemName && (x.CustomData == null || x.CustomData["SlotID"] == null));
-        if (item) {
-            var UpdateCustomDataRequest = {
-                "PlayFabId": currentPlayerId,
-                "ItemInstanceId": item.ItemInstanceId,
-                "Data": {
-                    "SlotID": element.SlotID
-                }
+        var index = inventory.Inventory.findIndex(x => x.ItemId == element.ItemName);
+        if (index != -1) {
+            var baseObj = {
+                "InventoryID": inventory.Inventory[index].ItemInstanceId,
+                "ItemBPClass": element.ItemName,
+                "SlotID": element.SlotID
             };
-            server.UpdateUserInventoryItemCustomData(UpdateCustomDataRequest);
+            updatebuildslots.push(baseObj);
+            inventory.Inventory.splice(index, 1);
         }
+        else
+            log.info("No free build object in inventory!");
     });
+    updatebuildconfig[BUILDING_SLOTS_RO_KEY] = updatebuildslots;
+    updateUserReadOnlyData({ [BUILDING_RO_KEY]: JSON.stringify(updatebuildconfig) }, null);
 };
+function getTitleData(keyList) {
+    log.info("API call: Getting title data " + JSON.stringify(keyList));
+    return server.GetTitleData({
+        "Keys": keyList
+    }).Data;
+}
+function getTitleInternalData(keyList) {
+    log.info("API call: Getting title internal data", keyList);
+    return server.GetTitleInternalData({
+        "Keys": keyList
+    }).Data;
+}
+function getUserData(keyList) {
+    log.info("API call: Getting title data " + JSON.stringify(keyList));
+    return server.GetUserData({
+        "PlayFabId": currentPlayerId,
+        "Keys": keyList
+    }).Data;
+}
+function getUserReadOnlyData(keyList) {
+    log.info("API call: Getting UserROD " + JSON.stringify(keyList));
+    return server.GetUserReadOnlyData({
+        "PlayFabId": currentPlayerId,
+        "Keys": keyList
+    }).Data;
+}
+function getUserInternalData(keyList) {
+    log.info("API call: Getting UserIntData " + JSON.stringify(keyList));
+    return server.GetUserInternalData({
+        "PlayFabId": currentPlayerId,
+        "Keys": keyList
+    }).Data;
+}
+function updateUserTitleData(dataToUpdate, keysToRemove) {
+    log.info("API call: Updating USER TD with data " +
+        JSON.stringify(dataToUpdate) +
+        (keysToRemove != undefined ? (", removing keys " + JSON.stringify(keysToRemove)) : ""));
+    return server.UpdateUserData({
+        "PlayFabId": currentPlayerId,
+        "Data": dataToUpdate,
+        "KeysToRemove": keysToRemove
+    });
+}
+function updateUserReadOnlyData(dataToUpdate, keysToRemove) {
+    log.info("API call: Updating USER ROD with data " +
+        JSON.stringify(dataToUpdate) +
+        (keysToRemove != undefined ? (", removing keys " + JSON.stringify(keysToRemove)) : ""));
+    return server.UpdateUserReadOnlyData({
+        "PlayFabId": currentPlayerId,
+        "Data": dataToUpdate,
+        "KeysToRemove": keysToRemove
+    });
+}
+function updateUserInternalData(dataToUpdate, keysToRemove) {
+    log.info("API call: Updating USER ID with data " +
+        JSON.stringify(dataToUpdate) +
+        (keysToRemove != undefined ? (", removing keys " + JSON.stringify(keysToRemove)) : ""));
+    return server.UpdateUserInternalData({
+        "PlayFabId": currentPlayerId,
+        "Data": dataToUpdate,
+        "KeysToRemove": keysToRemove
+    });
+}
+function updatePlayerStatistics(statistics) {
+    log.info("API call: Updating PLAYER STATISTICS with data " + JSON.stringify(statistics));
+    return server.UpdatePlayerStatistics({
+        "PlayFabId": currentPlayerId,
+        "Statistics": statistics,
+    });
+}
+function getUserInventory(playfabId) {
+    if (playfabId == null)
+        playfabId = currentPlayerId;
+    log.info("API call: Getting user inventory");
+    return server.GetUserInventory({
+        "PlayFabId": playfabId
+    });
+}
+function GrantItemToUserInventory(name) {
+    log.info("API call: Granting items " + JSON.stringify(name));
+    return server.GrantItemsToUser({
+        "PlayFabId": currentPlayerId,
+        "ItemIds": [name]
+    });
+}
+function GrantItemsToUserInventory(names) {
+    log.info("API call: Granting items " + JSON.stringify(names));
+    return server.GrantItemsToUser({
+        "PlayFabId": currentPlayerId,
+        "ItemIds": names
+    });
+}
 //# sourceMappingURL=output.js.map
