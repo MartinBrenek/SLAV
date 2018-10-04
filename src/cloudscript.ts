@@ -309,7 +309,8 @@ handlers.UpdateBuildItemState = function (args) {
         else
             log.info("No free build object in inventory!");
     });
-    updatebuildconfig[BUILDING_SLOTS_RO_KEY] = updatebuildslots;
+    //updatebuildconfig[BUILDING_SLOTS_RO_KEY] = null;
+    updatebuildconfig[BUILDING_SLOTS_RO_KEY] = "tonda"  //updatebuildslots;
     updateUserReadOnlyData({ [BUILDING_RO_KEY]: JSON.stringify(updatebuildconfig) },null);
 };
 
