@@ -298,16 +298,21 @@ handlers.UpdateBuildItemState = function (args) {
         var index = inventory.Inventory.findIndex(x => x.ItemId == element.ItemName);
         if(index != -1)
         {
-            var baseObj = {
-                "InventoryID": inventory.Inventory[index].ItemInstanceId,
-                "ItemBPClass": element.ItemName,
-                "SlotID": element.SlotID
-            };
-            updatebuildslots.push(baseObj);
-            inventory.Inventory.splice(index,1);
+            if(inventory.Inventory[index].RemainingUses > 0)
+            {
+                var baseObj = {
+                    //"InventoryID": inventory.Inventory[index].ItemInstanceId,
+                    "ItemBPClass": element.ItemName,
+                    "SlotID": element.SlotID
+                };
+                updatebuildslots.push(baseObj);
+                inventory.Inventory[index].RemainingUses--;
+            }
+            else
+                log.info("There are no free build objects of this types in inventory!");
         }
         else
-            log.info("No free build object in inventory!");
+            log.info("Build object of this type does not appears in inventory!");
     });
     //updatebuildconfig[BUILDING_SLOTS_RO_KEY] = null;
     updatebuildconfig[BUILDING_SLOTS_RO_KEY] = updatebuildslots;
