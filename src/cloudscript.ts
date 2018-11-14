@@ -303,7 +303,8 @@ handlers.UpdateBuildItemState = function (args) {
                 var baseObj = {
                     //"InventoryID": inventory.Inventory[index].ItemInstanceId,
                     "ItemBPClass": element.ItemName,
-                    "SlotID": element.SlotID
+                    "SlotID": element.SlotID,
+                    "SkinID": element.SkinID
                 };
                 updatebuildslots.push(baseObj);
                 inventory.Inventory[index].RemainingUses--;

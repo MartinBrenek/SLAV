@@ -151,7 +151,8 @@ handlers.UpdateBuildItemState = function (args) {
             if (inventory.Inventory[index].RemainingUses > 0) {
                 var baseObj = {
                     "ItemBPClass": element.ItemName,
-                    "SlotID": element.SlotID
+                    "SlotID": element.SlotID,
+                    "SkinID": element.SkinID
                 };
                 updatebuildslots.push(baseObj);
                 inventory.Inventory[index].RemainingUses--;
